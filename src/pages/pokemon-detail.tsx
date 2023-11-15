@@ -1,72 +1,101 @@
-import React, { FunctionComponent, useState, useEffect } from 'react';
+import React, { FunctionComponent, useState, useEffect } from "react";
 // import { RouteComponentProps, Link, useParams } from 'react-router-dom';
-import { Link, useParams } from 'react-router-dom';
-import Pokemon from '../models/pokemon';
-import POKEMONS from '../models/mock-pokemon';
-import formatDate from '../helpers/format-date';
-import formatType from '../helpers/format-type';
-  
+import { Link, useParams } from "react-router-dom";
+import Pokemon from "../models/pokemon";
+// import POKEMONS from "../models/mock-pokemon";
+import formatDate from "../helpers/format-date";
+import formatType from "../helpers/format-type";
+import PokemonService from "../services/pokemon-service";
+
 type ParamsId = { id: string };
 
 // const PokemonsDetail: FunctionComponent<RouteComponentProps<Params>> = ({ match }) => {
 const PokemonsDetail: FunctionComponent = () => {
-    const { id } = useParams<ParamsId>(); // Utilisation de useParams pour obtenir le paramètre 'id'
-    
-    // Par défaut, valeur null. La syntaxe <Pokemon|null> permet de dire à typescript que cet objet est soit un Pokemon soit null
-  const [pokemon, setPokemon] = useState<Pokemon|null>(null);
-  
-//   useEffect(() => {
-//     POKEMONS.forEach(pokemon => {
-//       if (match.params.id === pokemon.id.toString()) {
-//         setPokemon(pokemon);
-//       }
-//     })
-//   }, [match.params.id]);
+  const { id } = useParams<ParamsId>(); // Utilisation de useParams pour obtenir le paramètre 'id'
+  // const parsedId = +{id}; // Utilisation du signe + pour convertir id en nombre
 
-useEffect(() => {
-    POKEMONS.forEach((pokemon) => {
-      if (id === pokemon.id.toString()) {
-        setPokemon(pokemon);
+  // Par défaut, valeur null. La syntaxe <Pokemon|null> permet de dire à typescript que cet objet est soit un Pokemon soit null
+  const [pokemon, setPokemon] = useState<Pokemon | null>(null);
+
+  // useEffect(() => {
+  //   POKEMONS.forEach((pokemon) => {
+  //     if (id === pokemon.id.toString()) {
+  //       setPokemon(pokemon);
+  //     }
+  //   });
+  // }, [id]);
+
+  useEffect(() => {
+    const fetchPokemon = async () => {
+      if (id !== undefined) { // Vérifiez si id est défini
+        try {
+          const pokemonData = await PokemonService.getPokemon(+id); // pour convertir la chaîne id en un nombre
+          setPokemon(pokemonData);
+        } catch (error) {
+          console.error("Error fetching pokemon:", error);
+        }
       }
-    });
+    };
+  
+    fetchPokemon();
   }, [id]);
-    
+  
+
   return (
     <div>
-      { pokemon ? (
+      {pokemon ? (
         <div className="row">
-          <div className="col s12 m8 offset-m2"> 
-            <h2 className="header center">{ pokemon.name }</h2>
-            <div className="card hoverable"> 
+          <div className="col s12 m8 offset-m2">
+            <h2 className="header center">{pokemon.name}</h2>
+            <div className="card hoverable">
               <div className="card-image">
-                <img src={pokemon.picture} alt={pokemon.name} style={{width: '250px', margin: '0 auto'}}/>
+                <img
+                  src={pokemon.picture}
+                  alt={pokemon.name}
+                  style={{ width: "250px", margin: "0 auto" }}
+                />
+                <Link
+                  to={`/pokemons/edit/${pokemon.id}`}
+                  className="btn btn-floating halfway-fab waves-effect waves-light"
+                >
+                  <i className="material-icons">edit</i>
+                </Link>
               </div>
               <div className="card-stacked">
                 <div className="card-content">
                   <table className="bordered striped">
                     <tbody>
-                      <tr> 
-                        <td>Nom</td> 
-                        <td><strong>{ pokemon.name }</strong></td> 
-                      </tr>
-                      <tr> 
-                        <td>Points de vie</td> 
-                        <td><strong>{ pokemon.hp }</strong></td> 
-                      </tr> 
-                      <tr> 
-                        <td>Dégâts</td> 
-                        <td><strong>{ pokemon.cp }</strong></td> 
-                      </tr> 
-                      <tr> 
-                        <td>Types</td> 
+                      <tr>
+                        <td>Nom</td>
                         <td>
-                          {pokemon.types.map(type => (
-                           <span key={type} className={formatType(type)}>{type}</span>
-                          ))}</td> 
-                      </tr> 
-                      <tr> 
-                        <td>Date de création</td> 
-                        <td>{formatDate(pokemon.created)}</td> 
+                          <strong>{pokemon.name}</strong>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Points de vie</td>
+                        <td>
+                          <strong>{pokemon.hp}</strong>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Dégâts</td>
+                        <td>
+                          <strong>{pokemon.cp}</strong>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Types</td>
+                        <td>
+                          {pokemon.types.map((type) => (
+                            <span key={type} className={formatType(type)}>
+                              {type}
+                            </span>
+                          ))}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Date de création</td>
+                        <td>{formatDate(pokemon.created)}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -83,6 +112,6 @@ useEffect(() => {
       )}
     </div>
   );
-}
-  
+};
+
 export default PokemonsDetail;

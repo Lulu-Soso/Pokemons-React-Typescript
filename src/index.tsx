@@ -26,12 +26,17 @@ import {
 import App from "./App";
 import PokemonList from "./pages/pokemon-list";
 import PokemonsDetail from "./pages/pokemon-detail";
+import PageNotFound from "./pages/page-not-found";
+import PokemonEdit from "./pages/pokemon-edit";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<App />}>
       <Route index={true} path="/" element={<PokemonList />} />
+      <Route path="/pokemons" element={<PokemonList />} />
+      <Route path="/pokemons/edit/:id" element={<PokemonEdit />} />
       <Route path="/pokemons/:id" element={<PokemonsDetail />} />
+      <Route path="*" element={<PageNotFound />} />
     </Route>
   )
 );
