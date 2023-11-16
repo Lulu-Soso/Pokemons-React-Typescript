@@ -38,7 +38,7 @@
 //   }
 
 //   static addPokemon(pokemon: Pokemon): Promise<Pokemon> {
-//     // delete pokemon.created; 
+//     // delete pokemon.created;
 //     return fetch(`http://localhost:5000/pokemons/`, {
 //       method: "POST",
 //       body: JSON.stringify(pokemon),
@@ -46,6 +46,12 @@
 //         "Content-Type": "application/json",
 //       },
 //     })
+//       .then((response) => response.json())
+//       .catch((error) => this.handleError(error));
+//   }
+
+//   static searchPokemon(term: string): Promise<Pokemon[]> {
+//     return fetch(`http://localhost:5000/pokemons?q=${term}`)
 //       .then((response) => response.json())
 //       .catch((error) => this.handleError(error));
 //   }
@@ -115,17 +121,20 @@ export default class PokemonService {
 
   static async deletePokemon(pokemon: Pokemon): Promise<{}> {
     try {
-      const response = await fetch(`http://localhost:5000/pokemons/${pokemon.id}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-  
+      const response = await fetch(
+        `http://localhost:5000/pokemons/${pokemon.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
       if (!response.ok) {
         throw new Error(`HTTP Error! Status: ${response.status}`);
       }
-  
+
       const result = await response.json();
       return result;
     } catch (error) {
@@ -134,31 +143,43 @@ export default class PokemonService {
     }
   }
 
-static async addPokemon(pokemon: Pokemon): Promise<Pokemon> {
-  try {
-    // delete pokemon.created;
+  static async addPokemon(pokemon: Pokemon): Promise<Pokemon> {
+    try {
+      // delete pokemon.created;
 
-    const response = await fetch(`http://localhost:5000/pokemons/`, {
-      method: "POST",
-      body: JSON.stringify(pokemon),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+      const response = await fetch(`http://localhost:5000/pokemons/`, {
+        method: "POST",
+        body: JSON.stringify(pokemon),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-    if (!response.ok) {
-      throw new Error(`HTTP Error! Status: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`HTTP Error! Status: ${response.status}`);
+      }
+
+      const addedPokemon = await response.json();
+      return addedPokemon;
+    } catch (error) {
+      console.error("Error adding Pokemon:", error);
+      throw error;
     }
-
-    const addedPokemon = await response.json();
-    return addedPokemon;
-  } catch (error) {
-    console.error("Error adding Pokemon:", error);
-    throw error;
   }
-}
 
-  
+  static async searchPokemon(term: string): Promise<Pokemon[]> {
+    try {
+      const response = await fetch(`http://localhost:5000/pokemons?q=${term}`);
+      if (!response.ok) {
+        throw new Error(`HTTP Error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error searching for Pokemon:", error);
+      throw error;
+    }
+  }
 
   static isEmpty(data: Object): boolean {
     return Object.keys(data).length === 0;
