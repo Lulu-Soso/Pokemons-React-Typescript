@@ -26,6 +26,30 @@
 //       .catch((error) => this.handleError(error));
 //   }
 
+//   static deletePokemon(pokemon: Pokemon): Promise<{}> {
+//     return fetch(`http://localhost:5000/pokemons/${pokemon.id}`, {
+//       method: "DELETE",
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+//     })
+//       .then((response) => response.json())
+//       .catch((error) => this.handleError(error));
+//   }
+
+//   static addPokemon(pokemon: Pokemon): Promise<Pokemon> {
+//     // delete pokemon.created; 
+//     return fetch(`http://localhost:5000/pokemons/`, {
+//       method: "POST",
+//       body: JSON.stringify(pokemon),
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+//     })
+//       .then((response) => response.json())
+//       .catch((error) => this.handleError(error));
+//   }
+
 //   static isEmpty(data: Object): boolean {
 //     return Object.keys(data).length === 0;
 //   }
@@ -88,6 +112,53 @@ export default class PokemonService {
       throw error;
     }
   }
+
+  static async deletePokemon(pokemon: Pokemon): Promise<{}> {
+    try {
+      const response = await fetch(`http://localhost:5000/pokemons/${pokemon.id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP Error! Status: ${response.status}`);
+      }
+  
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error("Error deleting Pokemon:", error);
+      throw error;
+    }
+  }
+
+static async addPokemon(pokemon: Pokemon): Promise<Pokemon> {
+  try {
+    // delete pokemon.created;
+
+    const response = await fetch(`http://localhost:5000/pokemons/`, {
+      method: "POST",
+      body: JSON.stringify(pokemon),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP Error! Status: ${response.status}`);
+    }
+
+    const addedPokemon = await response.json();
+    return addedPokemon;
+  } catch (error) {
+    console.error("Error adding Pokemon:", error);
+    throw error;
+  }
+}
+
+  
 
   static isEmpty(data: Object): boolean {
     return Object.keys(data).length === 0;

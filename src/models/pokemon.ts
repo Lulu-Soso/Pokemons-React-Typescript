@@ -36,8 +36,8 @@ export default class Pokemon {
     public id: number,
     public hp: number = 100,
     public cp: number = 10,
-    public name: string = "name",
-    public picture: string = "http://...",
+    public name: string = "...",
+    public picture: string = "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/XXX.png",
     public types: string[] = ["Normal"],
     public created: Date = new Date()
   ) {}

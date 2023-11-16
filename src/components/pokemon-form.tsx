@@ -6,6 +6,7 @@ import PokemonService from "../services/pokemon-service";
 
 type Props = {
   pokemon: Pokemon;
+  isEditForm: boolean;
 };
 
 type Field = {
@@ -15,14 +16,16 @@ type Field = {
 };
 
 type Form = {
+  picture: Field;
   name: Field;
   hp: Field;
   cp: Field;
   types: Field;
 };
 
-const PokemonForm: FunctionComponent<Props> = ({ pokemon }) => {
+const PokemonForm: FunctionComponent<Props> = ({ pokemon, isEditForm }) => {
   const [form, setForm] = useState<Form>({
+    picture: { value: pokemon.picture },
     name: { value: pokemon.name, isValid: true },
     hp: { value: pokemon.hp, isValid: true },
     cp: { value: pokemon.cp, isValid: true },
@@ -55,7 +58,7 @@ const PokemonForm: FunctionComponent<Props> = ({ pokemon }) => {
 
     setForm((prevForm) => ({
       ...prevForm,
-      [fieldName]: { value: fieldValue, isValid: true }, // Vous pouvez également mettre à jour la validité ici si nécessaire
+      [fieldName]: { value: fieldValue, isValid: true }, 
     }));
   };
 
@@ -67,11 +70,9 @@ const PokemonForm: FunctionComponent<Props> = ({ pokemon }) => {
     let newField: Field;
 
     if (checked) {
-      // Si l'utilisateur coche un type, l'ajoute à la liste des types du pokémon.
       const newTypes: string[] = [...form.types.value, type];
       newField = { value: newTypes };
     } else {
-      // Si l'utilisateur décoche un type, le retire de la liste des types du pokémon.
       const newTypes: string[] = form.types.value.filter(
         (currentType: string) => currentType !== type
       );
@@ -81,63 +82,62 @@ const PokemonForm: FunctionComponent<Props> = ({ pokemon }) => {
     setForm({ ...form, types: newField });
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const isFormValid = validateForm();
-
-    if (isFormValid) {
-      try {
-        pokemon.name = form.name.value;
-        pokemon.hp = form.hp.value;
-        pokemon.cp = form.cp.value;
-        pokemon.types = form.types.value;
-        
-        await PokemonService.updatePokemon(pokemon);
-        navigate(`/pokemons/${pokemon.id}`);
-      } catch (error) {
-        console.error("Error updating Pokemon:", error);
-      }
-    }
+  const isAddForm = () => {
+    return !isEditForm;
   };
 
   const validateForm = () => {
     let isFormValid = true;
 
-    // Validator name
+    if (isAddForm()) {
+      const start =
+        "https://assets.pokemon.com/assets/cms2/img/pokedex/detail/";
+      const end = ".png";
+
+      if (
+        !form.picture.value.startsWith(start) ||
+        !form.picture.value.endsWith(end)
+      ) {
+        const errorMsg = "L'url n'est pas valide";
+        const newField = { ...form.picture, error: errorMsg, isValid: false };
+        setForm((prevForm) => ({ ...prevForm, picture: newField }));
+        isFormValid = false;
+      } else {
+        const newField = { ...form.picture, error: "", isValid: true };
+        setForm((prevForm) => ({ ...prevForm, picture: newField }));
+      }
+    }
+
     if (!/^[a-zA-Zàéè ]{3,25}$/.test(form.name.value)) {
       const errorMsg = "Le nom du pokémon est requis (1-25).";
-      form.name.error = errorMsg;
-      form.name.isValid = false;
+      const newField = { ...form.name, error: errorMsg, isValid: false };
+      setForm((prevForm) => ({ ...prevForm, name: newField }));
       isFormValid = false;
     } else {
-      form.name.error = "";
-      form.name.isValid = true;
+      const newField = { ...form.name, error: "", isValid: true };
+      setForm((prevForm) => ({ ...prevForm, name: newField }));
     }
 
-    // Validator hp
     if (!/^[0-9]{1,3}$/.test(form.hp.value)) {
-      const errorMsg =
-        "Les points de vie du pokémon sont compris entre 0 et 999.";
-      form.hp.error = errorMsg;
-      form.hp.isValid = false;
+      const errorMsg = "Les points de vie du pokémon sont compris entre 0 et 999.";
+      const newField = { ...form.hp, error: errorMsg, isValid: false };
+      setForm((prevForm) => ({ ...prevForm, hp: newField }));
       isFormValid = false;
     } else {
-      form.hp.error = "";
-      form.hp.isValid = true;
+      const newField = { ...form.hp, error: "", isValid: true };
+      setForm((prevForm) => ({ ...prevForm, hp: newField }));
     }
 
-    // Validator cp
     if (!/^[0-9]{1,2}$/.test(form.cp.value)) {
       const errorMsg = "Les dégâts du pokémon sont compris entre 0 et 99.";
-      form.cp.error = errorMsg;
-      form.cp.isValid = false;
+      const newField = { ...form.cp, error: errorMsg, isValid: false };
+      setForm((prevForm) => ({ ...prevForm, cp: newField }));
       isFormValid = false;
     } else {
-      form.cp.error = "";
-      form.cp.isValid = true;
+      const newField = { ...form.cp, error: "", isValid: true };
+      setForm((prevForm) => ({ ...prevForm, cp: newField }));
     }
 
-    setForm({ ...form });
     return isFormValid;
   };
 
@@ -153,20 +153,97 @@ const PokemonForm: FunctionComponent<Props> = ({ pokemon }) => {
     return true;
   };
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const isFormValid = validateForm();
+
+    if (isFormValid) {
+      try {
+        const updatedPokemon = { ...pokemon };
+        updatedPokemon.picture = form.picture.value;
+        updatedPokemon.name = form.name.value;
+        updatedPokemon.hp = form.hp.value;
+        updatedPokemon.cp = form.cp.value;
+        updatedPokemon.types = form.types.value;
+
+        if (isEditForm) {
+          await updatePokemon(updatedPokemon);
+        } else {
+          await addPokemon(updatedPokemon);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    }
+  };
+
+  const addPokemon = async (pokemon: Pokemon) => {
+    try {
+      await PokemonService.addPokemon(pokemon);
+      navigate(`/pokemons`);
+    } catch (error) {
+      console.error("Error adding Pokemon:", error);
+    }
+  };
+
+  const updatePokemon = async (pokemon: Pokemon) => {
+    try {
+      await PokemonService.updatePokemon(pokemon);
+      navigate(`/pokemons/${pokemon.id}`);
+    } catch (error) {
+      console.error("Error updating Pokemon:", error);
+    }
+  };
+
+  const deletePokemon = async () => {
+    try {
+      await PokemonService.deletePokemon(pokemon);
+      navigate(`/pokemons`);
+    } catch (error) {
+      console.error("Error deleting Pokemon:", error);
+    }
+  };
+
   return (
     <form onSubmit={(e) => handleSubmit(e)}>
       <div className="row">
         <div className="col s12 m8 offset-m2">
           <div className="card hoverable">
-            <div className="card-image">
-              <img
-                src={pokemon.picture}
-                alt={pokemon.name}
-                style={{ width: "250px", margin: "0 auto" }}
-              />
-            </div>
+            {isEditForm && (
+              <div className="card-image">
+                <img
+                  src={pokemon.picture}
+                  alt={pokemon.name}
+                  style={{ width: "250px", margin: "0 auto" }}
+                />
+                <span className="btn-floating halfway-fab waves-effect waves-light">
+                  <i onClick={deletePokemon} className="material-icons">
+                    delete
+                  </i>
+                </span>
+              </div>
+            )}
             <div className="card-stacked">
               <div className="card-content">
+                {/* Pokemon picture */}
+                {isAddForm() && (
+                  <div className="form-group">
+                    <label htmlFor="name">Image</label>
+                    <input
+                      id="picture"
+                      name="picture"
+                      type="text"
+                      className="form-control"
+                      value={form.picture.value}
+                      onChange={(e) => handleInputChange(e)}
+                    ></input>
+                    {form.picture.error && (
+                      <div className="card-panel red accent-1">
+                        {form.picture.error}
+                      </div>
+                    )}
+                  </div>
+                )}
                 {/* Pokemon name */}
                 <div className="form-group">
                   <label htmlFor="name">Nom</label>
@@ -229,7 +306,7 @@ const PokemonForm: FunctionComponent<Props> = ({ pokemon }) => {
                           type="checkbox"
                           className="filled-in"
                           value={type}
-                          disabled={!isTypesValid(type)} // Si le type n'est pas valide, alors on verrouille la case à cocher
+                          disabled={!isTypesValid(type)}
                           checked={hasType(type)}
                           onChange={(e) => selectType(type, e)}
                         ></input>
